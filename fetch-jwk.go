@@ -16,7 +16,7 @@ type openIDConfiguration struct {
 	jwksURL string `json:"jwks_uri,omitempty"`
 }
 
-// FromIssuerClaim verifies JWT token
+// FromIssuerClaim extracts issuer from JWT token assuming that OpenID discover URL is <iss>+/.well-known/openid-configuration. Then fetches JWT keys from jwks_url found in configuration
 func FromIssuerClaim(token *jwt.Token) (interface{}, error) {
 	if token == nil {
 		return nil, fmt.Errorf("Token cannot be null")
@@ -36,7 +36,7 @@ func FromIssuerClaim(token *jwt.Token) (interface{}, error) {
 	return FromDiscoverURL(token, dcvURL.String())
 }
 
-// FromDiscoverURL vvv
+// FromDiscoverURL - fetches JWT keys from jwks_url found in configuration from OpenID discover URL.
 func FromDiscoverURL(token *jwt.Token, discoverURL string) (interface{}, error) {
 	resp, err := http.Get(discoverURL)
 	if err != nil {
@@ -53,7 +53,7 @@ func FromDiscoverURL(token *jwt.Token, discoverURL string) (interface{}, error) 
 	return FromJWKsURL(token, config.jwksURL)
 }
 
-// FromJWKsURL sss
+// FromJWKsURL fetches JWT keys from jwks_url
 func FromJWKsURL(token *jwt.Token, jwksURL string) (interface{}, error) {
 	if keyID, ok := token.Header["kid"].(string); ok {
 
