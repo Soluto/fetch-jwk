@@ -1,4 +1,4 @@
-module github.com/AleF83/fetch-jwk
+module github.com/alef83/fetch-jwk
 
 go 1.12
 
