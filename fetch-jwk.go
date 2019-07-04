@@ -13,10 +13,6 @@ import (
 	"github.com/robfig/cron"
 )
 
-type openIDConfiguration struct {
-	jwksURL string `json:"jwks_uri,omitempty"`
-}
-
 // JWKProvider structure for jwk config
 type JWKProvider struct {
 	Issuer      string
@@ -104,8 +100,9 @@ func getKeySet(jwksURL string) (*jwk.Set, error) {
 func getKeySetFromJWKCache(jwksURL string) (*jwk.Set, error) {
 	var keySet *jwk.Set
 	var ok bool
+	var err error
 	if keySet, ok = jwksCache[jwksURL]; !ok {
-		keySet, err := getKeySet(jwksURL)
+		keySet, err = getKeySet(jwksURL)
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +120,7 @@ func getKeySetFromDiscoverURLCache(discoverURL string) (*jwk.Set, error) {
 			return nil, err
 		}
 
-		keySet, err := getKeySetFromJWKCache(jwksURL)
+		keySet, err = getKeySetFromJWKCache(jwksURL)
 		if err != nil {
 			return nil, err
 		}
@@ -135,8 +132,9 @@ func getKeySetFromDiscoverURLCache(discoverURL string) (*jwk.Set, error) {
 func getKeySetFromIssuerCache(issuer string) (*jwk.Set, error) {
 	var keySet *jwk.Set
 	var ok bool
+	var err error
 	if keySet, ok = issuerCache[issuer]; !ok {
-		keySet, err := getKeySetFromProvidedConfig(issuer)
+		keySet, err = getKeySetFromProvidedConfig(issuer)
 		if err != nil {
 			return nil, err
 		}
@@ -190,13 +188,13 @@ func getJWKsURL(discoverURL string) (string, error) {
 		return "", resErr
 	}
 	decoder := json.NewDecoder(resp.Body)
-	var config openIDConfiguration
+	var config map[string]interface{}
 	err = decoder.Decode(&config)
 	if err != nil {
 		resErr := fmt.Errorf("Error while getting openid connect configuration: %v", err)
 		return "", resErr
 	}
-	return config.jwksURL, nil
+	return config["jwks_uri"].(string), nil
 }
 
 func getDiscoverURL(issuer string) (string, error) {
