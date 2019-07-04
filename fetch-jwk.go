@@ -210,8 +210,10 @@ func getDiscoverURL(issuer string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Error while getting discover url from issuer claim: %v", err)
 	}
-	dcvURL.Scheme = "https"
-	return discoverURL, nil
+	if dcvURL.Scheme == "" {
+		dcvURL.Scheme = "https"
+	}
+	return dcvURL.String(), nil
 }
 
 func refreshCaches() {
