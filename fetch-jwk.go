@@ -187,11 +187,12 @@ func getJWKsURL(discoverURL string) (string, error) {
 		resErr := fmt.Errorf("Error while getting openid connect configuration: %v", err)
 		return "", resErr
 	}
+
 	decoder := json.NewDecoder(resp.Body)
 	var config map[string]interface{}
 	err = decoder.Decode(&config)
 	if err != nil {
-		resErr := fmt.Errorf("Error while getting openid connect configuration: %v", err)
+		resErr := fmt.Errorf("Error while parsing openid connect configuration: %v", err)
 		return "", resErr
 	}
 	return config["jwks_uri"].(string), nil
