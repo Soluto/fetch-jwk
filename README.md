@@ -17,7 +17,7 @@ Otherwise you can use `FromDiscoverURL` or `FromJWKsURL` functions.
 ```go
 import (
     "fmt"
-    jwkfetch "github.com/AleF83/fetch-jwk"
+    jwkfetch "github.com/Soluto/fetch-jwk"
     jwt "github.com/dgrijalva/jwt-go"
 )
 
@@ -48,11 +48,11 @@ JWK that were used for JWT validation are cached and used to validate another JW
 
 > Note: JWK are being changed usually every 24 hours. So the library refreshes the cache automatically every 24 hours.
 
-If issuer or jwks_url are known in advance use [`Init`](https://godoc.org/github.com/AleF83/fetch-jwk#Init) method during your app startup.
+If issuer or jwks_url are known in advance use [`Init`](https://godoc.org/github.com/Soluto/fetch-jwk#Init) method during your app startup.
 
 ## API Reference
 
-API reference documentation is [here](https://godoc.org/github.com/AleF83/fetch-jwk).
+API reference documentation is [here](https://godoc.org/github.com/Soluto/fetch-jwk).
 
 ## License
 
