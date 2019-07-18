@@ -26,49 +26,55 @@ var jwksCache map[string]*jwk.Set = make(map[string]*jwk.Set)
 var discoverURLsCache map[string]*jwk.Set = make(map[string]*jwk.Set)
 
 // FromIssuerClaim extracts issuer from JWT token assuming that OpenID discover URL is <iss>+/.well-known/openid-configuration. Then fetches JWT keys from jwks_url found in configuration
-func FromIssuerClaim(token *jwt.Token) (interface{}, error) {
-	keyID, err := getKeyID(token)
-	if err != nil {
-		return nil, err
-	}
+func FromIssuerClaim() func(*jwt.Token) (interface{}, error) {
+	return func(token *jwt.Token) (interface{}, error) {
+		keyID, err := getKeyID(token)
+		if err != nil {
+			return nil, err
+		}
 
-	claims := token.Claims.(jwt.MapClaims)
-	issuer := claims["iss"].(string)
-	keySet, err := getKeySetFromIssuerCache(issuer)
-	if err != nil {
-		return nil, err
-	}
+		claims := token.Claims.(jwt.MapClaims)
+		issuer := claims["iss"].(string)
+		keySet, err := getKeySetFromIssuerCache(issuer)
+		if err != nil {
+			return nil, err
+		}
 
-	return getKey(keySet, keyID)
+		return getKey(keySet, keyID)
+	}
 }
 
 // FromDiscoverURL - fetches JWT keys from jwks_url found in configuration from OpenID discover URL.
-func FromDiscoverURL(token *jwt.Token, discoverURL string) (interface{}, error) {
-	keyID, err := getKeyID(token)
-	if err != nil {
-		return nil, err
-	}
+func FromDiscoverURL(discoverURL string) func(*jwt.Token) (interface{}, error) {
+	return func(token *jwt.Token) (interface{}, error) {
+		keyID, err := getKeyID(token)
+		if err != nil {
+			return nil, err
+		}
 
-	keySet, err := getKeySetFromDiscoverURLCache(discoverURL)
-	if err != nil {
-		return nil, err
-	}
+		keySet, err := getKeySetFromDiscoverURLCache(discoverURL)
+		if err != nil {
+			return nil, err
+		}
 
-	return getKey(keySet, keyID)
+		return getKey(keySet, keyID)
+	}
 }
 
 // FromJWKsURL fetches JWT keys from jwks_url
-func FromJWKsURL(token *jwt.Token, jwksURL string) (interface{}, error) {
-	keyID, err := getKeyID(token)
-	if err != nil {
-		return nil, err
-	}
+func FromJWKsURL(jwksURL string) func(*jwt.Token) (interface{}, error) {
+	return func(token *jwt.Token) (interface{}, error) {
+		keyID, err := getKeyID(token)
+		if err != nil {
+			return nil, err
+		}
 
-	keySet, err := getKeySetFromJWKCache(jwksURL)
-	if err != nil {
-		return nil, err
+		keySet, err := getKeySetFromJWKCache(jwksURL)
+		if err != nil {
+			return nil, err
+		}
+		return getKey(keySet, keyID)
 	}
-	return getKey(keySet, keyID)
 }
 
 func getKeyID(token *jwt.Token) (string, error) {

@@ -77,151 +77,6 @@ func mockKey() interface{} {
 	return key
 }
 
-func TestFromIssuerClaim(t *testing.T) {
-	server := createTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/.well-known/openid-configuration") {
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			io.WriteString(w, discoverResponse)
-			return
-		}
-
-		if strings.HasSuffix(r.URL.Path, "/jwks") {
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			io.WriteString(w, jwkResponse)
-			return
-		}
-	}))
-	defer server.Close()
-
-	type args struct {
-		token *jwt.Token
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    interface{}
-		wantErr bool
-	}{
-		{
-			name: "Happy flow",
-			args: args{
-				token: mockToken(),
-			},
-			want:    mockKey(),
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := FromIssuerClaim(tt.args.token)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("FromIssuerClaim() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FromIssuerClaim() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestFromDiscoverURL(t *testing.T) {
-	server := createTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/.well-known/openid-configuration") {
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			io.WriteString(w, discoverResponse)
-			return
-		}
-
-		if strings.HasSuffix(r.URL.Path, "/jwks") {
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			io.WriteString(w, jwkResponse)
-			return
-		}
-	}))
-	defer server.Close()
-	type args struct {
-		token       *jwt.Token
-		discoverURL string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    interface{}
-		wantErr bool
-	}{
-		{
-			name: "Happy flow",
-			args: args{
-				token:       mockToken(),
-				discoverURL: fmt.Sprintf("http://%s/.well-known/openid-configuration", httptestServerURL),
-			},
-			want:    mockKey(),
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := FromDiscoverURL(tt.args.token, tt.args.discoverURL)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("FromDiscoverURL() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FromDiscoverURL() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestFromJWKsURL(t *testing.T) {
-	server := createTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/jwks") {
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			io.WriteString(w, jwkResponse)
-			return
-		}
-	}))
-	defer server.Close()
-	type args struct {
-		token   *jwt.Token
-		jwksURL string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    interface{}
-		wantErr bool
-	}{
-		{
-			name: "Happy flow",
-			args: args{
-				token:   mockToken(),
-				jwksURL: fmt.Sprintf("http://%s/jwks", httptestServerURL),
-			},
-			want:    mockKey(),
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := FromJWKsURL(tt.args.token, tt.args.jwksURL)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("FromJWKsURL() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FromJWKsURL() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_getKeyID(t *testing.T) {
 	type args struct {
 		token *jwt.Token
@@ -440,6 +295,156 @@ func Test_getDiscoverURL(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("getDiscoverURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFromIssuerClaim(t *testing.T) {
+	server := createTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/.well-known/openid-configuration") {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			io.WriteString(w, discoverResponse)
+			return
+		}
+
+		if strings.HasSuffix(r.URL.Path, "/jwks") {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			io.WriteString(w, jwkResponse)
+			return
+		}
+	}))
+	defer server.Close()
+
+	type args struct {
+		token *jwt.Token
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name: "Happy flow",
+			args: args{
+				token: mockToken(),
+			},
+			want:    mockKey(),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keyFunc := FromIssuerClaim()
+			got, err := keyFunc(tt.args.token)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FromIssuerClaim() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FromIssuerClaim() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFromDiscoverURL(t *testing.T) {
+	server := createTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/.well-known/openid-configuration") {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			io.WriteString(w, discoverResponse)
+			return
+		}
+
+		if strings.HasSuffix(r.URL.Path, "/jwks") {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			io.WriteString(w, jwkResponse)
+			return
+		}
+	}))
+	defer server.Close()
+
+	type args struct {
+		discoverURL string
+		token       *jwt.Token
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name: "Happy flow",
+			args: args{
+				token:       mockToken(),
+				discoverURL: fmt.Sprintf("http://%s/.well-known/openid-configuration", httptestServerURL),
+			},
+			want:    mockKey(),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keyFunc := FromDiscoverURL(tt.args.discoverURL)
+			got, err := keyFunc(tt.args.token)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FromDiscoverURL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FromDiscoverURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFromJWKsURL(t *testing.T) {
+	server := createTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/jwks") {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			io.WriteString(w, jwkResponse)
+			return
+		}
+	}))
+	defer server.Close()
+
+	type args struct {
+		jwksURL string
+		token   *jwt.Token
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name: "Happy flow",
+			args: args{
+				token:   mockToken(),
+				jwksURL: fmt.Sprintf("http://%s/jwks", httptestServerURL),
+			},
+			want:    mockKey(),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keyFunc := FromJWKsURL(tt.args.jwksURL)
+			got, err := keyFunc(tt.args.token)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FromJWKsURL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FromJWKsURL() = %v, want %v", got, tt.want)
 			}
 		})
 	}
