@@ -45,7 +45,11 @@ func FromIssuerClaim() func(*jwt.Token) (interface{}, error) {
 		key, err := getKey(keySet, keyID)
 		if err == errKeyNotFound {
 			delete(issuerCache, issuer)
-			return FromIssuerClaim()(token)
+			freshKeySet, err := getKeySetFromIssuerCache(issuer)
+			if err != nil {
+				return nil, err
+			}
+			return getKey(freshKeySet, keyID)
 		}
 		return key, err
 	}
@@ -67,7 +71,11 @@ func FromDiscoverURL(discoverURL string) func(*jwt.Token) (interface{}, error) {
 		key, err := getKey(keySet, keyID)
 		if err == errKeyNotFound {
 			delete(discoverURLsCache, discoverURL)
-			return FromDiscoverURL(discoverURL)(token)
+			freshKeySet, err := getKeySetFromDiscoverURLCache(discoverURL)
+			if err != nil {
+				return nil, err
+			}
+			return getKey(freshKeySet, keyID)
 		}
 		return key, err
 	}
@@ -89,7 +97,11 @@ func FromJWKsURL(jwksURL string) func(*jwt.Token) (interface{}, error) {
 		key, err := getKey(keySet, keyID)
 		if err == errKeyNotFound {
 			delete(jwksCache, jwksURL)
-			return FromJWKsURL(jwksURL)(token)
+			freshKeySet, err := getKeySetFromJWKCache(jwksURL)
+			if err != nil {
+				return nil, err
+			}
+			return getKey(freshKeySet, keyID)
 		}
 		return key, err
 	}
