@@ -1,5 +1,7 @@
 # fetch-jwk
 
+[![Build Status](https://travis-ci.org/Soluto/fetch-jwk.svg?branch=master)](https://travis-ci.org/Soluto/fetch-jwk)
+
 This library provides methods to fetch jwt keys from jwks url
 
 ## Rationale
