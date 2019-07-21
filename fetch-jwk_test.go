@@ -23,6 +23,19 @@ var discoverResponse = `{
 	"jwks_uri": "http://localhost:8888/jwks"
 }`
 
+var cachedSet = `{
+	"keys": [
+	{
+		"kid": "512fe2ae0e60bd03084b12885b41423f",
+		"e": "AQAB",
+		"kty": "RSA",
+		"alg": "RS256",
+		"n": "xL3TevYy9F9myjfAJw1dLV3LouuP8m24VlgWTehPypAce34YAprAHNWJhflKFCNQqqXRJEJYfyGn10K0OywIXrmpkq8-Sxmy3WmMT-DprKisP3YIbrW2gEm8BL8mQYyHosGQAFxM1ErhPtItiI56Avs7hj1bQ7SXJGElwqi19NqlN7sfoOUpTCuOp5E2wKRjMHKryi1pvPAXqxS58vDQ2no72d3Uoy1flQfK6pyCBqCMQkiP8ganuZV4oLaXEeS8e71w7HuoJ87o30r4J_WKAVwENwJJWhai1c_TvyWCCBFjEjdIDiQJaG4lGaaPV60mSHTGk2Sr_cf3aIKCbLGk0Q",
+		"use": "sig"
+	  }
+	]
+}`
+
 var jwkResponse = `{
 	"keys": [
 	  {
@@ -31,6 +44,14 @@ var jwkResponse = `{
 		"kty": "RSA",
 		"alg": "RS256",
 		"n": "xL3TevYy9F9myjfAJw1dLV3LouuP8m24VlgWTehPypAce34YAprAHNWJhflKFCNQqqXRJEJYfyGn10K0OywIXrmpkq8-Sxmy3WmMT-DprKisP3YIbrW2gEm8BL8mQYyHosGQAFxM1ErhPtItiI56Avs7hj1bQ7SXJGElwqi19NqlN7sfoOUpTCuOp5E2wKRjMHKryi1pvPAXqxS58vDQ2no72d3Uoy1flQfK6pyCBqCMQkiP8ganuZV4oLaXEeS8e71w7HuoJ87o30r4J_WKAVwENwJJWhai1c_TvyWCCBFjEjdIDiQJaG4lGaaPV60mSHTGk2Sr_cf3aIKCbLGk0Q",
+		"use": "sig"
+	  },
+	  {
+		"kid": "84f294c45160088d079fee68138f52133d3e228c",
+		"e": "AQAB",
+		"kty": "RSA",
+		"alg": "RS256",
+		"n": "iyzj9wpDDZLCbgbr2zKv3bs8zqjflcVEd7PYMjKGYpoaY2LdqfjFxrwTqd9Ea4m3NIR2giOx9JLQhtqqSSpBJpBBpHmaEd2FCPwd4GQTKJurEP6Ho9HWAuRTMhs8W04pd__HQ0Bc22AEamieGLtzcYfIaAc9g5RCxZdRVbGK0Z0vSOAwN1PC_S76nWGphouHukU40EiwjqC-D9G2xYFbKNb0_NJMxJ5UCenN85FjEii5-oW0wCBmt_1Sr76Q_e0INxfGu6dRf0vGXPvqxkINz2knjl9ec2SvOK2hnmRN4O9zToKH70_DBrsZE0ePDScTOWPHJU2wOyE6gzkL6FdaFQ",
 		"use": "sig"
 	  }
 	]
@@ -56,9 +77,6 @@ func mockToken() *jwt.Token {
 		},
 		Method: jwt.SigningMethodRS256,
 	}
-	token.Header = map[string]interface{}{
-		"kid": "512fe2ae0e60bd03084b12885b41423f",
-	}
 	return token
 }
 
@@ -69,6 +87,21 @@ func mockKey() interface{} {
 	e.SetBytes(eBuf)
 
 	nBuf, _ := base64.RawURLEncoding.DecodeString("xL3TevYy9F9myjfAJw1dLV3LouuP8m24VlgWTehPypAce34YAprAHNWJhflKFCNQqqXRJEJYfyGn10K0OywIXrmpkq8-Sxmy3WmMT-DprKisP3YIbrW2gEm8BL8mQYyHosGQAFxM1ErhPtItiI56Avs7hj1bQ7SXJGElwqi19NqlN7sfoOUpTCuOp5E2wKRjMHKryi1pvPAXqxS58vDQ2no72d3Uoy1flQfK6pyCBqCMQkiP8ganuZV4oLaXEeS8e71w7HuoJ87o30r4J_WKAVwENwJJWhai1c_TvyWCCBFjEjdIDiQJaG4lGaaPV60mSHTGk2Sr_cf3aIKCbLGk0Q")
+	n.SetBytes(nBuf)
+	key := &rsa.PublicKey{
+		E: int(e.Int64()),
+		N: &n,
+	}
+	return key
+}
+
+func mockKey2() interface{} {
+	var e, n big.Int
+
+	eBuf, _ := base64.RawURLEncoding.DecodeString("AQAB")
+	e.SetBytes(eBuf)
+
+	nBuf, _ := base64.RawURLEncoding.DecodeString("iyzj9wpDDZLCbgbr2zKv3bs8zqjflcVEd7PYMjKGYpoaY2LdqfjFxrwTqd9Ea4m3NIR2giOx9JLQhtqqSSpBJpBBpHmaEd2FCPwd4GQTKJurEP6Ho9HWAuRTMhs8W04pd__HQ0Bc22AEamieGLtzcYfIaAc9g5RCxZdRVbGK0Z0vSOAwN1PC_S76nWGphouHukU40EiwjqC-D9G2xYFbKNb0_NJMxJ5UCenN85FjEii5-oW0wCBmt_1Sr76Q_e0INxfGu6dRf0vGXPvqxkINz2knjl9ec2SvOK2hnmRN4O9zToKH70_DBrsZE0ePDScTOWPHJU2wOyE6gzkL6FdaFQ")
 	n.SetBytes(nBuf)
 	key := &rsa.PublicKey{
 		E: int(e.Int64()),
@@ -415,6 +448,9 @@ func TestFromJWKsURL(t *testing.T) {
 	}))
 	defer server.Close()
 
+	jwksURL := fmt.Sprintf("http://%s/jwks", httptestServerURL)
+	jwksCache[jwksURL], _ = jwk.ParseString(cachedSet)
+
 	type args struct {
 		jwksURL string
 		token   *jwt.Token
@@ -429,9 +465,22 @@ func TestFromJWKsURL(t *testing.T) {
 			name: "Happy flow",
 			args: args{
 				token:   mockToken(),
-				jwksURL: fmt.Sprintf("http://%s/jwks", httptestServerURL),
+				jwksURL: jwksURL,
 			},
 			want:    mockKey(),
+			wantErr: false,
+		},
+		{
+			name: "Cache refresh",
+			args: args{
+				token: func() *jwt.Token {
+					tkn := mockToken()
+					tkn.Header["kid"] = "84f294c45160088d079fee68138f52133d3e228c"
+					return tkn
+				}(),
+				jwksURL: jwksURL,
+			},
+			want:    mockKey2(),
 			wantErr: false,
 		},
 	}

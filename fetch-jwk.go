@@ -25,6 +25,8 @@ var issuerCache map[string]*jwk.Set = make(map[string]*jwk.Set)
 var jwksCache map[string]*jwk.Set = make(map[string]*jwk.Set)
 var discoverURLsCache map[string]*jwk.Set = make(map[string]*jwk.Set)
 
+var errKeyNotFound = fmt.Errorf("Token key not found in jwks uri")
+
 // FromIssuerClaim extracts issuer from JWT token assuming that OpenID discover URL is <iss>+/.well-known/openid-configuration. Then fetches JWT keys from jwks_url found in configuration
 func FromIssuerClaim() func(*jwt.Token) (interface{}, error) {
 	return func(token *jwt.Token) (interface{}, error) {
@@ -40,7 +42,12 @@ func FromIssuerClaim() func(*jwt.Token) (interface{}, error) {
 			return nil, err
 		}
 
-		return getKey(keySet, keyID)
+		key, err := getKey(keySet, keyID)
+		if err == errKeyNotFound {
+			delete(issuerCache, issuer)
+			return FromIssuerClaim()(token)
+		}
+		return key, err
 	}
 }
 
@@ -57,7 +64,12 @@ func FromDiscoverURL(discoverURL string) func(*jwt.Token) (interface{}, error) {
 			return nil, err
 		}
 
-		return getKey(keySet, keyID)
+		key, err := getKey(keySet, keyID)
+		if err == errKeyNotFound {
+			delete(discoverURLsCache, discoverURL)
+			return FromDiscoverURL(discoverURL)(token)
+		}
+		return key, err
 	}
 }
 
@@ -73,7 +85,13 @@ func FromJWKsURL(jwksURL string) func(*jwt.Token) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		return getKey(keySet, keyID)
+
+		key, err := getKey(keySet, keyID)
+		if err == errKeyNotFound {
+			delete(jwksCache, jwksURL)
+			return FromJWKsURL(jwksURL)(token)
+		}
+		return key, err
 	}
 }
 
@@ -87,7 +105,7 @@ func getKeyID(token *jwt.Token) (string, error) {
 func getKey(keySet *jwk.Set, keyID string) (interface{}, error) {
 	keys := keySet.LookupKeyID(keyID)
 	if keys == nil || len(keys) == 0 {
-		return nil, errors.New("Token key not found in jwks uri")
+		return nil, errKeyNotFound
 	}
 	if len(keys) > 1 {
 		return nil, errors.New("Unexpected error. More than one key found in jwks uri")
