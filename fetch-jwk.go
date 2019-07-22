@@ -30,81 +30,48 @@ var errKeyNotFound = fmt.Errorf("Token key not found in jwks uri")
 // FromIssuerClaim extracts issuer from JWT token assuming that OpenID discover URL is <iss>+/.well-known/openid-configuration. Then fetches JWT keys from jwks_url found in configuration
 func FromIssuerClaim() func(*jwt.Token) (interface{}, error) {
 	return func(token *jwt.Token) (interface{}, error) {
-		keyID, err := getKeyID(token)
-		if err != nil {
-			return nil, err
-		}
-
 		claims := token.Claims.(jwt.MapClaims)
 		issuer := claims["iss"].(string)
-		keySet, err := getKeySetFromIssuerCache(issuer)
-		if err != nil {
-			return nil, err
-		}
 
-		key, err := getKey(keySet, keyID)
-		if err == errKeyNotFound {
-			delete(issuerCache, issuer)
-			freshKeySet, err := getKeySetFromIssuerCache(issuer)
-			if err != nil {
-				return nil, err
-			}
-			return getKey(freshKeySet, keyID)
-		}
-		return key, err
+		return xXX(token, issuer, issuerCache, getKeySetFromIssuerCache)
 	}
 }
 
 // FromDiscoverURL - fetches JWT keys from jwks_url found in configuration from OpenID discover URL.
 func FromDiscoverURL(discoverURL string) func(*jwt.Token) (interface{}, error) {
 	return func(token *jwt.Token) (interface{}, error) {
-		keyID, err := getKeyID(token)
-		if err != nil {
-			return nil, err
-		}
-
-		keySet, err := getKeySetFromDiscoverURLCache(discoverURL)
-		if err != nil {
-			return nil, err
-		}
-
-		key, err := getKey(keySet, keyID)
-		if err == errKeyNotFound {
-			delete(discoverURLsCache, discoverURL)
-			freshKeySet, err := getKeySetFromDiscoverURLCache(discoverURL)
-			if err != nil {
-				return nil, err
-			}
-			return getKey(freshKeySet, keyID)
-		}
-		return key, err
+		return xXX(token, discoverURL, discoverURLsCache, getKeySetFromDiscoverURLCache)
 	}
 }
 
 // FromJWKsURL fetches JWT keys from jwks_url
 func FromJWKsURL(jwksURL string) func(*jwt.Token) (interface{}, error) {
 	return func(token *jwt.Token) (interface{}, error) {
-		keyID, err := getKeyID(token)
-		if err != nil {
-			return nil, err
-		}
-
-		keySet, err := getKeySetFromJWKCache(jwksURL)
-		if err != nil {
-			return nil, err
-		}
-
-		key, err := getKey(keySet, keyID)
-		if err == errKeyNotFound {
-			delete(jwksCache, jwksURL)
-			freshKeySet, err := getKeySetFromJWKCache(jwksURL)
-			if err != nil {
-				return nil, err
-			}
-			return getKey(freshKeySet, keyID)
-		}
-		return key, err
+		return xXX(token, jwksURL, jwksCache, getKeySetFromJWKCache)
 	}
+}
+
+func xXX(token *jwt.Token, cacheKey string, cache map[string]*jwk.Set, retrieveFn func(string) (*jwk.Set, error)) (interface{}, error) {
+	keyID, err := getKeyID(token)
+	if err != nil {
+		return nil, err
+	}
+
+	keySet, err := retrieveFn(cacheKey)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := getKey(keySet, keyID)
+	if err == errKeyNotFound {
+		delete(cache, cacheKey)
+		freshKeySet, err := retrieveFn(cacheKey)
+		if err != nil {
+			return nil, err
+		}
+		return getKey(freshKeySet, keyID)
+	}
+	return key, err
 }
 
 func getKeyID(token *jwt.Token) (string, error) {
