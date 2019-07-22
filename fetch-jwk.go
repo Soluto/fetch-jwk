@@ -33,25 +33,25 @@ func FromIssuerClaim() func(*jwt.Token) (interface{}, error) {
 		claims := token.Claims.(jwt.MapClaims)
 		issuer := claims["iss"].(string)
 
-		return xXX(token, issuer, issuerCache, getKeySetFromIssuerCache)
+		return retrieveKey(token, issuer, issuerCache, getKeySetFromIssuerCache)
 	}
 }
 
 // FromDiscoverURL - fetches JWT keys from jwks_url found in configuration from OpenID discover URL.
 func FromDiscoverURL(discoverURL string) func(*jwt.Token) (interface{}, error) {
 	return func(token *jwt.Token) (interface{}, error) {
-		return xXX(token, discoverURL, discoverURLsCache, getKeySetFromDiscoverURLCache)
+		return retrieveKey(token, discoverURL, discoverURLsCache, getKeySetFromDiscoverURLCache)
 	}
 }
 
 // FromJWKsURL fetches JWT keys from jwks_url
 func FromJWKsURL(jwksURL string) func(*jwt.Token) (interface{}, error) {
 	return func(token *jwt.Token) (interface{}, error) {
-		return xXX(token, jwksURL, jwksCache, getKeySetFromJWKCache)
+		return retrieveKey(token, jwksURL, jwksCache, getKeySetFromJWKCache)
 	}
 }
 
-func xXX(token *jwt.Token, cacheKey string, cache map[string]*jwk.Set, retrieveFn func(string) (*jwk.Set, error)) (interface{}, error) {
+func retrieveKey(token *jwt.Token, cacheKey string, cache map[string]*jwk.Set, retrieveFn func(string) (*jwk.Set, error)) (interface{}, error) {
 	keyID, err := getKeyID(token)
 	if err != nil {
 		return nil, err
